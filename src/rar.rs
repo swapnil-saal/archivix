@@ -44,10 +44,19 @@ pub fn list(path: &Path, pw: Option<&str>) -> Result<Vec<Entry>> {
 
 pub fn extract(path: &Path, opts: &ExtractOptions) -> Result<ExtractStats> {
     let ex = Extractor::new(opts.clone())?;
+    // Headers are cheap to read: size the progress bar up front.
+    let listed = list(path, opts.password.as_deref())?;
+    let wanted: Vec<&Entry> = listed.iter().filter(|e| e.kind == EntryKind::File && ex.wants(&e.path)).collect();
+    crate::progress().set_total(wanted.iter().map(|e| e.size).sum());
+    crate::progress().set_total_entries(wanted.len() as u64);
     let mut ar = archive!(path, opts.password.as_deref()).open_for_processing().map_err(|e| anyhow!("rar: {e}"))?;
     while let Some(h) = ar.read_header().map_err(|e| anyhow!("rar: {e}"))? {
+        crate::progress().check()?;
         let e = to_entry(h.entry());
         let target = if ex.wants(&e.path) { ex.target(&e.path) } else { None };
+        if target.is_some() && e.kind == EntryKind::File {
+            crate::progress().add(e.size);
+        }
         ar = match (target, e.kind) {
             (Some(t), EntryKind::Dir) => {
                 ex.make_dir(&t, e.mtime, e.mode)?;

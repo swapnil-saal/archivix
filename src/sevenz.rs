@@ -72,6 +72,10 @@ pub fn extract(path: &Path, opts: &ExtractOptions) -> Result<ExtractStats> {
         .collect();
     let mut blocks: Vec<usize> = blocks.into_iter().collect();
     blocks.sort_unstable();
+    let wanted = (0..a.files.len()).filter(|&i| a.files[i].has_stream && ex.wants(a.files[i].name.trim_end_matches('/')));
+    let (bytes, n) = wanted.fold((0u64, 0u64), |(b, n), i| (b + a.files[i].size, n + 1));
+    crate::progress().set_total(bytes);
+    crate::progress().set_total_entries(n);
     // Independent blocks decode in parallel; spare threads go to each block's codec.
     let per_block = (threads() / blocks.len().max(1)).max(1) as u32;
     let err: Mutex<Option<anyhow::Error>> = Mutex::new(None);
@@ -81,7 +85,8 @@ pub fn extract(path: &Path, opts: &ExtractOptions) -> Result<ExtractStats> {
         dec.for_each_entries(&mut |entry: &ArchiveEntry, r: &mut dyn Read| {
             let Some(&i) = by_name.get(entry.name.as_str()) else { return Ok(true) };
             let e = to_entry(&a, i);
-            if let Err(x) = ex.extract_entry(&e, r) {
+            let mut r = crate::progress::Counted::new(r, crate::progress::Count::Both);
+            if let Err(x) = ex.extract_entry(&e, &mut r) {
                 *err.lock().unwrap() = Some(x);
                 return Ok(false);
             }
@@ -121,7 +126,8 @@ pub fn visit(path: &Path, pw: Option<&str>, v: &mut Visitor<'_>) -> Result<()> {
             if !(v.filter)(&e) {
                 return Ok(true);
             }
-            match (v.each)(&e, r) {
+            let mut r = crate::progress::Counted::new(r, crate::progress::Count::Both);
+            match (v.each)(&e, &mut r) {
                 Ok(true) => Ok(true),
                 Ok(false) => {
                     stop = true;
@@ -156,10 +162,13 @@ impl Read for LazyFile {
         if self.f.is_none() {
             self.f = Some(File::open(&self.path)?);
         }
+        crate::progress().check()?;
         let n = self.f.as_mut().unwrap().read(b)?;
+        crate::progress().add(n as u64);
         if n == 0 {
             self.f = None;
             self.done = true;
+            crate::progress().add_entry();
         }
         Ok(n)
     }
@@ -192,16 +201,19 @@ pub fn create(output: &Path, inputs: &[Input], level: i32) -> Result<CreateStats
             EntryKind::Dir => {
                 e.has_stream = false;
                 w.push_archive_entry::<&[u8]>(e, None).map_err(|x| anyhow!("7z: {x}"))?;
+                crate::progress().add_entry();
             }
             EntryKind::Symlink => {
                 let t = inp.link_target.clone().unwrap_or_default().into_bytes();
                 e.has_stream = !t.is_empty();
                 stats.input_bytes += t.len() as u64;
                 w.push_archive_entry(e, Some(&t[..])).map_err(|x| anyhow!("7z: {x}"))?;
+                crate::progress().add_entry();
             }
             _ if inp.size == 0 => {
                 e.has_stream = false;
                 w.push_archive_entry::<&[u8]>(e, None).map_err(|x| anyhow!("7z: {x}"))?;
+                crate::progress().add_entry();
             }
             _ => {
                 e.has_stream = true;

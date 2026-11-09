@@ -3,9 +3,12 @@ use archivix::extract::{ExtractOptions, Matcher};
 use archivix::util::{format_time, human, mode_string};
 use archivix::{Codec, CreateOptions, EntryKind, Format};
 use clap::{Parser, Subcommand};
+use std::io::IsTerminal;
 use std::io::Write;
 use std::path::PathBuf;
-use std::time::Instant;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
 #[derive(Parser)]
 #[command(
@@ -208,9 +211,126 @@ fn main() {
     }
 }
 
+/// Live progress line on stderr, drawn by a background thread from the
+/// library's global progress counters. Cleared on `stop()` or drop.
+struct Bar {
+    stop: Arc<AtomicBool>,
+    handle: Option<std::thread::JoinHandle<()>>,
+}
+
+impl Bar {
+    fn start(phase: Option<&str>, enabled: bool) -> Bar {
+        let stop = Arc::new(AtomicBool::new(false));
+        let Some(phase) = phase.filter(|_| enabled) else { return Bar { stop, handle: None } };
+        archivix::progress().reset(phase);
+        let flag = stop.clone();
+        let handle = std::thread::spawn(move || {
+            let t0 = Instant::now();
+            let mut drawn = false;
+            let mut tick = 0usize;
+            while !flag.load(Ordering::Relaxed) {
+                std::thread::sleep(Duration::from_millis(80));
+                // Quick commands finish without ever showing a bar.
+                if t0.elapsed() < Duration::from_millis(200) || flag.load(Ordering::Relaxed) {
+                    continue;
+                }
+                let line = render(&archivix::progress().snapshot(), t0.elapsed(), tick);
+                tick += 1;
+                eprint!("\r\x1b[2K{line}");
+                let _ = std::io::stderr().flush();
+                drawn = true;
+            }
+            if drawn {
+                eprint!("\r\x1b[2K");
+                let _ = std::io::stderr().flush();
+            }
+        });
+        Bar { stop, handle: Some(handle) }
+    }
+
+    fn stop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(h) = self.handle.take() {
+            let _ = h.join();
+        }
+    }
+}
+
+impl Drop for Bar {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
+fn term_width() -> usize {
+    #[cfg(unix)]
+    unsafe {
+        let mut ws: libc::winsize = std::mem::zeroed();
+        if libc::ioctl(libc::STDERR_FILENO, libc::TIOCGWINSZ, &mut ws) == 0 && ws.ws_col > 0 {
+            return ws.ws_col as usize;
+        }
+    }
+    std::env::var("COLUMNS").ok().and_then(|c| c.parse().ok()).unwrap_or(100)
+}
+
+fn fmt_dur(d: f64) -> String {
+    let s = d.round() as u64;
+    if s >= 3600 {
+        format!("{}h{:02}m", s / 3600, s % 3600 / 60)
+    } else if s >= 60 {
+        format!("{}m{:02}s", s / 60, s % 60)
+    } else {
+        format!("{s}s")
+    }
+}
+
+fn render(p: &archivix::progress::Snapshot, elapsed: Duration, tick: usize) -> String {
+    const SPIN: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    let secs = elapsed.as_secs_f64();
+    let rate = if secs > 0.0 { format!("{}/s", human((p.bytes as f64 / secs) as u64)) } else { String::new() };
+    let entries = match (p.entries, p.total_entries) {
+        (0, _) => String::new(),
+        (e, t) if t > 0 => format!("  {e}/{t} files"),
+        (e, _) => format!("  {e} files"),
+    };
+    let width = term_width();
+    let line = match p.fraction() {
+        Some(f) => {
+            let eta = if f > 0.01 && f < 1.0 { format!("  ETA {}", fmt_dur(secs * (1.0 - f) / f)) } else { String::new() };
+            let tail = format!(" {:>3}%  {}  {rate}{entries}{eta}", (f * 100.0) as u32, human(p.bytes));
+            let head = format!("{} {:<13} ", SPIN[tick % SPIN.len()], p.phase);
+            let bar_w = width.saturating_sub(head.chars().count() + tail.chars().count() + 3).clamp(10, 40);
+            let filled = f * bar_w as f64;
+            let full = filled as usize;
+            const PART: [char; 8] = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉'];
+            let mut bar: String = "█".repeat(full);
+            if full < bar_w {
+                bar.push(PART[((filled - full as f64) * 8.0) as usize]);
+                bar.push_str(&"░".repeat(bar_w - full - 1));
+            }
+            format!("{head}▕{bar}▏{tail}")
+        }
+        None => format!("{} {:<13} {}  {rate}{entries}  {}", SPIN[tick % SPIN.len()], p.phase, human(p.bytes), fmt_dur(secs)),
+    };
+    line.chars().take(width.saturating_sub(1)).collect()
+}
+
+fn phase_of(cmd: &Cmd) -> Option<&'static str> {
+    Some(match cmd {
+        Cmd::Create { .. } | Cmd::Compress { .. } => "Compressing",
+        Cmd::Extract { .. } => "Extracting",
+        Cmd::List { .. } | Cmd::Info { .. } => "Reading",
+        Cmd::Grep { .. } => "Searching",
+        Cmd::Test { .. } => "Testing",
+        Cmd::Decompress { .. } => "Decompressing",
+        Cmd::Cat { .. } | Cmd::Mcp | Cmd::Formats { .. } => return None,
+    })
+}
+
 fn run(cli: Cli) -> Result<()> {
     let quiet = cli.quiet;
     let t0 = Instant::now();
+    let mut bar = Bar::start(phase_of(&cli.cmd), !quiet && std::io::stderr().is_terminal());
     match cli.cmd {
         Cmd::Create { output, inputs, level, format, method, exclude, follow, base_dir, chunk, no_index, no_smart_store } => {
             let opts = CreateOptions {
@@ -225,6 +345,7 @@ fn run(cli: Cli) -> Result<()> {
                 base_dir,
             };
             let st = archivix::create(&output, &inputs, &opts)?;
+            bar.stop();
             if !quiet {
                 let secs = t0.elapsed().as_secs_f64();
                 let pct = if st.input_bytes > 0 { st.output_bytes as f64 * 100.0 / st.input_bytes as f64 } else { 0.0 };
@@ -249,6 +370,7 @@ fn run(cli: Cli) -> Result<()> {
                 ..Default::default()
             };
             let st = archivix::extract(&archive, &opts)?;
+            bar.stop();
             let secs = t0.elapsed().as_secs_f64();
             if json {
                 println!("{}", serde_json::to_string(&serde_json::json!({"stats": st, "seconds": secs}))?);
@@ -266,6 +388,7 @@ fn run(cli: Cli) -> Result<()> {
         }
         Cmd::List { archive, members, long, json, password } => {
             let (format, entries) = archivix::list(&archive, password.as_deref())?;
+            bar.stop();
             let m = Matcher::new(&members)?;
             let entries: Vec<_> = entries.into_iter().filter(|e| m.matches(&e.path)).collect();
             let out = std::io::stdout();
@@ -305,6 +428,7 @@ fn run(cli: Cli) -> Result<()> {
             let re = regex::bytes::RegexBuilder::new(&pattern).case_insensitive(ignore_case).build()?;
             let m = Matcher::new(&members)?;
             let hits = archivix::grep(&archive, &re, &m, max, password.as_deref())?;
+            bar.stop();
             if json {
                 println!("{}", serde_json::to_string(&serde_json::json!({"matches": hits.len(), "results": hits}))?);
             } else {
@@ -318,6 +442,7 @@ fn run(cli: Cli) -> Result<()> {
         }
         Cmd::Info { archive, json, password } => {
             let i = archivix::info(&archive, password.as_deref())?;
+            bar.stop();
             if json {
                 println!("{}", serde_json::to_string_pretty(&i)?);
             } else {
@@ -336,6 +461,7 @@ fn run(cli: Cli) -> Result<()> {
         }
         Cmd::Test { archive, json, password } => {
             let r = archivix::test(&archive, password.as_deref())?;
+            bar.stop();
             let secs = t0.elapsed().as_secs_f64();
             if json {
                 println!("{}", serde_json::to_string(&serde_json::json!({"ok": r.errors.is_empty(), "report": r, "seconds": secs}))?);
@@ -365,6 +491,7 @@ fn run(cli: Cli) -> Result<()> {
             }
             let output = output.unwrap_or_else(|| PathBuf::from(format!("{}.{}", input.display(), c.extension())));
             let st = archivix::compress_file(&input, &output, c, level, chunk, !no_index)?;
+            bar.stop();
             if rm {
                 std::fs::remove_file(&input)?;
             }
@@ -386,6 +513,7 @@ fn run(cli: Cli) -> Result<()> {
                 let out = std::io::stdout();
                 let mut w = std::io::BufWriter::with_capacity(1 << 20, out.lock());
                 archivix::decompress_to(&input, &mut w)?;
+                bar.stop();
                 w.flush()?;
             } else {
                 let out = match output {
@@ -401,6 +529,7 @@ fn run(cli: Cli) -> Result<()> {
                 };
                 let mut w = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(&out)?);
                 let n = archivix::decompress_to(&input, &mut w)?;
+                bar.stop();
                 w.flush()?;
                 if !quiet {
                     let secs = t0.elapsed().as_secs_f64();

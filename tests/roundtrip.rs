@@ -181,3 +181,14 @@ fn single_stream_compress() {
         assert_eq!(dec, fs::read(&input).unwrap(), "{codec:?}");
     }
 }
+
+#[test]
+fn literal_patterns_match_bracketed_names() {
+    use archivix::extract::Matcher;
+    let glob = Matcher::new(&["photo [1].jpg".to_string()]).unwrap();
+    assert!(!glob.matches("photo [1].jpg"), "as a glob, [1] is a character class");
+    let lit = Matcher::literal(&["photo [1].jpg".to_string(), "dir".to_string()]);
+    assert!(lit.matches("photo [1].jpg"));
+    assert!(lit.matches("dir/inner.txt"));
+    assert!(!lit.matches("photo 1.jpg"));
+}

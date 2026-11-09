@@ -27,6 +27,9 @@ pub struct ExtractOptions {
     pub password: Option<String>,
     pub preserve_mtime: bool,
     pub preserve_perms: bool,
+    /// Treat `patterns` as exact member names (and directory prefixes), never
+    /// as globs, so names containing `[`, `*` or `?` match themselves.
+    pub literal: bool,
 }
 
 impl Default for ExtractOptions {
@@ -39,6 +42,7 @@ impl Default for ExtractOptions {
             password: None,
             preserve_mtime: true,
             preserve_perms: true,
+            literal: false,
         }
     }
 }
@@ -80,6 +84,12 @@ impl Matcher {
             }
         }
         Ok(Matcher { empty: patterns.is_empty(), exact, globs: if any_glob { Some(b.build()?) } else { None } })
+    }
+
+    /// Exact names and directory prefixes only; no glob interpretation.
+    pub fn literal(patterns: &[String]) -> Matcher {
+        let exact = patterns.iter().map(|p| p.trim_start_matches("./").trim_end_matches('/').to_string()).collect();
+        Matcher { empty: patterns.is_empty(), exact, globs: None }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -162,7 +172,7 @@ impl Extractor {
     pub fn new(opts: ExtractOptions) -> Result<Arc<Extractor>> {
         fs::create_dir_all(&opts.dest)?;
         let root = fs::canonicalize(&opts.dest)?;
-        let matcher = Matcher::new(&opts.patterns)?;
+        let matcher = if opts.literal { Matcher::literal(&opts.patterns) } else { Matcher::new(&opts.patterns)? };
         Ok(Arc::new(Extractor {
             root,
             opts,
@@ -282,6 +292,7 @@ impl Extractor {
         }
         self.files.fetch_add(1, Ordering::Relaxed);
         self.bytes.fetch_add(n, Ordering::Relaxed);
+        crate::progress().add_entry();
     }
 
     /// Stream a (large) member to disk on the calling thread.

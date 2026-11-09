@@ -295,6 +295,7 @@ fn compress_whole(method: ZipMethod, level: i32, data: &[u8]) -> Result<Vec<u8>>
 }
 
 fn prepare_small(idx: usize, inp: &Input, opts: &ZipOptions) -> Result<Prepared> {
+    crate::progress().check()?;
     let data = std::fs::read(&inp.src).with_context(|| format!("read {}", inp.src.display()))?;
     let crc = crc32fast::hash(&data);
     let usize = data.len() as u64;
@@ -389,6 +390,8 @@ fn write_large(out: &mut ZipOut, inp: &Input, opts: &ZipOptions) -> Result<()> {
             let bytes: &[u8] = if method == ZipMethod::Store { &data[*s..*e] } else { &c };
             out.w.write_all(bytes)?;
             csize += bytes.len() as u64;
+            crate::progress().add((e - s) as u64);
+            crate::progress().check()?;
         }
     }
     if nchunks == 0 && method == ZipMethod::Deflate {
@@ -442,6 +445,7 @@ pub fn create(output: &Path, inputs: &[Input], opts: &ZipOptions) -> Result<Crea
             _ => continue,
         }
         stats.entries += 1;
+        crate::progress().add_entry();
     }
 
     let small: Vec<usize> = (0..inputs.len()).filter(|&i| inputs[i].kind == EntryKind::File && inputs[i].size < LARGE).collect();
@@ -462,6 +466,8 @@ pub fn create(output: &Path, inputs: &[Input], opts: &ZipOptions) -> Result<Crea
             stats.input_bytes += p.usize;
             out.write_whole(inp, p.method, p.crc, p.usize, &p.data)?;
             stats.entries += 1;
+            crate::progress().add(p.usize);
+            crate::progress().add_entry();
         }
         Ok(())
     })?;
@@ -471,6 +477,7 @@ pub fn create(output: &Path, inputs: &[Input], opts: &ZipOptions) -> Result<Crea
         write_large(&mut out, &inputs[i], opts)?;
         stats.input_bytes += inputs[i].size;
         stats.entries += 1;
+        crate::progress().add_entry();
     }
     stats.output_bytes = out.finish()?;
     Ok(stats)

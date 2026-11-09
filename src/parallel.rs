@@ -171,6 +171,7 @@ impl<W: Write> ParallelWriter<W> {
     }
 
     fn submit(&mut self, data: Vec<u8>) -> io::Result<()> {
+        crate::progress().check()?;
         while self.pending.len() >= self.max_inflight {
             self.drain_one()?;
         }
@@ -347,7 +348,8 @@ pub struct ParallelReader<B: AsRef<[u8]> + Send + Sync + 'static> {
     codec: Codec,
     spans: Vec<Span>,
     next: usize,
-    pending: VecDeque<Receiver<io::Result<Vec<u8>>>>,
+    /// In-flight decodes and the compressed size of each (for progress).
+    pending: VecDeque<(Receiver<io::Result<Vec<u8>>>, usize)>,
     max_inflight: usize,
     cur: Vec<u8>,
     pos: usize,
@@ -369,7 +371,7 @@ impl<B: AsRef<[u8]> + Send + Sync + 'static> ParallelReader<B> {
                 let src = &(*data).as_ref()[s.off..s.off + s.len];
                 let _ = tx.send(decode_chunk(codec, src, s.u_size));
             });
-            self.pending.push_back(rx);
+            self.pending.push_back((rx, s.len));
         }
     }
 }
@@ -378,11 +380,13 @@ impl<B: AsRef<[u8]> + Send + Sync + 'static> Read for ParallelReader<B> {
     fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
         while self.pos >= self.cur.len() {
             self.fill();
+            crate::progress().check()?;
             match self.pending.pop_front() {
                 None => return Ok(0),
-                Some(rx) => {
+                Some((rx, clen)) => {
                     self.cur = rx.recv().map_err(|_| io::Error::other("decode worker died"))??;
                     self.pos = 0;
+                    crate::progress().add_done(clen as u64);
                 }
             }
         }

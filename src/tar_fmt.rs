@@ -85,8 +85,10 @@ struct CrcReader<R> {
 }
 impl<R: Read> Read for CrcReader<R> {
     fn read(&mut self, b: &mut [u8]) -> io::Result<usize> {
+        crate::progress().check()?;
         let n = self.r.read(b)?;
         self.h.update(&b[..n]);
+        crate::progress().add(n as u64);
         Ok(n)
     }
 }
@@ -158,6 +160,7 @@ pub fn create(output: &Path, inputs: &[Input], opts: &TarOptions) -> Result<Crea
                                 let d = d.with_context(|| format!("read {}", inp.src.display()))?;
                                 h.set_size(d.len() as u64);
                                 b.append_data(&mut h, &inp.name, &d[..])?;
+                                crate::progress().add(d.len() as u64);
                                 (crc32fast::hash(&d), d.len() as u64, None)
                             }
                             None => {
@@ -173,6 +176,8 @@ pub fn create(output: &Path, inputs: &[Input], opts: &TarOptions) -> Result<Crea
                 };
                 stats.entries += 1;
                 stats.input_bytes += size;
+                crate::progress().add_entry();
+                crate::progress().check()?;
                 let pos = b.get_ref().pos;
                 let data_off = pos - size.div_ceil(512) * 512;
                 idx_entries.push(IndexEntry {
@@ -260,34 +265,48 @@ pub fn open_stream(path: &Path, codec: Codec) -> Result<Opened> {
 impl Opened {
     /// A decoded byte stream: parallel when chunk boundaries are known.
     pub fn reader(&self, codec: Codec) -> Result<Box<dyn Read + Send>> {
+        use crate::progress::{Count, Counted};
+        // Progress: fraction = compressed bytes consumed; payload = decoded bytes.
+        let p = crate::progress();
+        p.set_total(self.data_end as u64);
+        if let Some(entries) = self.indexed_entries() {
+            p.set_total_entries(entries.iter().filter(|e| e.kind == EntryKind::File).count() as u64);
+        }
         let shared = Shared(self.map.clone(), self.data_end);
         if let Some(spans) = &self.spans
             && spans.len() > 1
         {
-            return Ok(Box::new(ParallelReader::new(Arc::new(shared), codec, spans.clone())));
+            return Ok(Box::new(Counted::new(ParallelReader::new(Arc::new(shared), codec, spans.clone()), Count::Bytes)));
         }
         if let Some(v) = self.whole(codec) {
-            return Ok(Box::new(Cursor::new(v)));
+            // Decoded in one fast step: track progress through the decoded bytes.
+            p.set_total(v.len() as u64);
+            return Ok(Box::new(Counted::new(Cursor::new(v), Count::Both)));
         }
+        let decoded = self.sequential(codec, Counted::new(Cursor::new(shared), Count::Done))?;
+        Ok(Box::new(Counted::new(decoded, Count::Bytes)))
+    }
+
+    fn sequential(&self, codec: Codec, src: crate::progress::Counted<Cursor<Shared>>) -> Result<Box<dyn Read + Send>> {
+        let shared = src;
         Ok(match codec {
-            Codec::None => Box::new(Cursor::new(shared)),
-            Codec::Gzip => Box::new(flate2::read::MultiGzDecoder::new(Cursor::new(shared))),
-            Codec::Bzip2 => Box::new(bzip2::read::MultiBzDecoder::new(Cursor::new(shared))),
-            Codec::Xz => Box::new(liblzma::bufread::XzDecoder::new_stream(
-                io::BufReader::with_capacity(1 << 20, Cursor::new(shared)),
-                codec::xz_mt_decoder()?,
-            )),
+            Codec::None => Box::new(shared),
+            Codec::Gzip => Box::new(flate2::read::MultiGzDecoder::new(shared)),
+            Codec::Bzip2 => Box::new(bzip2::read::MultiBzDecoder::new(shared)),
+            Codec::Xz => {
+                Box::new(liblzma::bufread::XzDecoder::new_stream(io::BufReader::with_capacity(1 << 20, shared), codec::xz_mt_decoder()?))
+            }
             Codec::Lzma => {
                 let s = liblzma::stream::Stream::new_lzma_decoder(u64::MAX)?;
-                Box::new(liblzma::read::XzDecoder::new_stream(Cursor::new(shared), s))
+                Box::new(liblzma::read::XzDecoder::new_stream(shared, s))
             }
             Codec::Zstd => {
-                let mut d = zstd::stream::read::Decoder::with_buffer(Cursor::new(shared))?;
+                let mut d = zstd::stream::read::Decoder::new(shared)?;
                 d.window_log_max(31)?;
                 Box::new(d)
             }
-            Codec::Lz4 => Box::new(codec::Lz4Multi::new(io::BufReader::with_capacity(1 << 20, Cursor::new(shared)))),
-            Codec::Brotli => Box::new(brotli::Decompressor::new(Cursor::new(shared), 1 << 20)),
+            Codec::Lz4 => Box::new(codec::Lz4Multi::new(io::BufReader::with_capacity(1 << 20, shared))),
+            Codec::Brotli => Box::new(brotli::Decompressor::new(shared, 1 << 20)),
         })
     }
 
@@ -399,6 +418,8 @@ pub fn extract(path: &Path, codec: Codec, opts: &ExtractOptions) -> Result<Extra
     {
         let data = &op.map[..op.data_end];
         let wanted: Vec<&IndexEntry> = entries.iter().filter(|e| ex.wants(&e.path)).collect();
+        crate::progress().set_total(wanted.iter().map(|e| e.size).sum());
+        crate::progress().set_total_entries(wanted.iter().filter(|e| e.kind == EntryKind::File).count() as u64);
         wanted.par_iter().try_for_each(|ie| -> Result<()> {
             let e = ie.to_entry();
             if is_metadata_only(e.kind) {
@@ -406,6 +427,7 @@ pub fn extract(path: &Path, codec: Codec, opts: &ExtractOptions) -> Result<Extra
             }
             let mut buf = Vec::with_capacity(ie.size as usize);
             parallel::read_range(data, codec, spans, ie.data_off, ie.size, &mut buf)?;
+            crate::progress().add(ie.size);
             ex.extract_entry(&e, &mut &buf[..])
         })?;
         return ex.finish();

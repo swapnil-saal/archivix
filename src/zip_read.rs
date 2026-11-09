@@ -79,21 +79,26 @@ pub fn extract(path: &Path, opts: &ExtractOptions) -> Result<ExtractStats> {
     let ar = ZipArchive::new(Cursor::new(&m[..]))?;
     let ex = Extractor::new(opts.clone())?;
     let mut idx: Vec<(usize, u64)> = Vec::with_capacity(ar.len());
+    let mut files = 0u64;
     for i in 0..ar.len() {
         let f = ar.by_index_data(i)?;
         let name = f.name().map(|s| s.into_owned()).unwrap_or_default();
         if ex.wants(name.trim_end_matches('/')) {
+            files += u64::from(!f.is_dir() && !f.is_symlink());
             idx.push((i, f.size()));
         }
     }
     // Largest first: big entries start early and don't straggle at the end.
     idx.sort_unstable_by_key(|a| std::cmp::Reverse(a.1));
+    crate::progress().set_total(idx.iter().map(|x| x.1).sum());
+    crate::progress().set_total_entries(files);
     let pw = opts.password.as_deref();
     idx.par_iter().try_for_each_init(
         || ar.clone(),
         |ar, &(i, _)| -> Result<()> {
-            let mut f = open_entry(ar, i, pw)?;
+            let f = open_entry(ar, i, pw)?;
             let e = file_entry(&f);
+            let mut f = crate::progress::Counted::new(f, crate::progress::Count::Both);
             ex.extract_entry(&e, &mut f).with_context(|| format!("extract {}", e.path))
         },
     )?;
@@ -112,7 +117,8 @@ pub fn visit(path: &Path, password: Option<&str>, f: &mut Visitor<'_>) -> Result
         if !(f.filter)(&e) {
             continue;
         }
-        let mut zf = open_entry(&mut ar, i, password)?;
+        let zf = open_entry(&mut ar, i, password)?;
+        let mut zf = crate::progress::Counted::new(zf, crate::progress::Count::Both);
         if !(f.each)(&e, &mut zf)? {
             break;
         }

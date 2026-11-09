@@ -10,6 +10,7 @@ pub mod format;
 pub mod index;
 pub mod mcp;
 pub mod parallel;
+pub mod progress;
 #[cfg(feature = "rar")]
 pub mod rar;
 pub mod sevenz;
@@ -23,6 +24,7 @@ pub use codec::Codec;
 pub use entry::{Entry, EntryKind};
 pub use extract::{ExtractOptions, ExtractStats};
 pub use format::Format;
+pub use progress::progress;
 
 use anyhow::{Context, Result, bail};
 use serde::Serialize;
@@ -92,6 +94,9 @@ pub fn create(output: &Path, inputs: &[PathBuf], opts: &CreateOptions) -> Result
         base: opts.base_dir.clone(),
     };
     let files = walk::collect(inputs, &wo)?;
+    let p = progress();
+    p.set_total(files.iter().map(|f| f.size).sum());
+    p.set_total_entries(files.len() as u64);
     match format {
         Format::Zip => {
             let method = match &opts.method {
@@ -129,7 +134,9 @@ pub fn compress_file(
     let level = level.unwrap_or(codec.default_level());
     let to = tar_fmt::TarOptions { codec, level, chunk, index };
     let mut sink = tar_fmt::open_sink(output, &to)?;
-    let mut f = std::fs::File::open(input).with_context(|| format!("open {}", input.display()))?;
+    let f = std::fs::File::open(input).with_context(|| format!("open {}", input.display()))?;
+    progress().set_total(f.metadata()?.len());
+    let mut f = progress::Counted::new(f, progress::Count::Both);
     let n = copy_big(&mut f, &mut sink)?;
     tar_fmt::finish_sink(sink, index, None)?;
     Ok(CreateStats { entries: 1, input_bytes: n, output_bytes: std::fs::metadata(output)?.len() })
@@ -278,6 +285,11 @@ pub struct Info {
 
 pub fn info(path: &Path, password: Option<&str>) -> Result<Info> {
     let (format, entries) = list(path, password)?;
+    info_from_entries(path, format, &entries)
+}
+
+/// Summarise an archive from a listing you already have (avoids listing twice).
+pub fn info_from_entries(path: &Path, format: Format, entries: &[Entry]) -> Result<Info> {
     let archive_size = std::fs::metadata(path)?.len();
     let total: u64 = entries.iter().map(|e| e.size).sum();
     let (instant, random, par) = match format {
