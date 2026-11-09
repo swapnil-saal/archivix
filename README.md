@@ -56,6 +56,9 @@ Run from source with `cargo run --release -p archivix-gui`; build the `.app`/`.d
 
 ## Install
 
+> 📘 **New here?** The [Installation & User Guide (PDF)](docs/archivix-guide.pdf) walks
+> through installing on every platform and every command, with examples.
+
 **Prebuilt binaries** for Linux (x86_64, arm64), macOS (Intel, Apple Silicon) and
 Windows are attached to each [GitHub release](https://github.com/swapnil-saal/archivix/releases).
 Download, extract, and put `archivix` on your `PATH`; each archive has a `.sha256` next to it.
