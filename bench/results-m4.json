@@ -1,0 +1,706 @@
+[
+ {
+  "group": "zip-src",
+  "scenario": "create zip (src)",
+  "tool": "zip -r (Info-ZIP)",
+  "seconds": 2.5506,
+  "size": 33139691,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "create zip (src)",
+  "tool": "bsdtar --format zip",
+  "seconds": 6.27,
+  "size": 33400834,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "create zip (src)",
+  "tool": "archivix",
+  "seconds": 1.2415,
+  "size": 32357136,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "extract zip (src)",
+  "tool": "unzip",
+  "seconds": 2.927,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "extract zip (src)",
+  "tool": "bsdtar -x",
+  "seconds": 1.813,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "extract zip (src)",
+  "tool": "archivix",
+  "seconds": 0.8808,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zip-src",
+  "scenario": "list zip (src)",
+  "tool": "unzip -l",
+  "seconds": 0.0352,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zip-src",
+  "scenario": "list zip (src)",
+  "tool": "archivix ls",
+  "seconds": 0.0249,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "create zip (mixed)",
+  "tool": "zip -r (Info-ZIP)",
+  "seconds": 11.6703,
+  "size": 276887363,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "create zip (mixed)",
+  "tool": "bsdtar --format zip",
+  "seconds": 14.6665,
+  "size": 277462222,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "create zip (mixed)",
+  "tool": "archivix",
+  "seconds": 1.5196,
+  "size": 275023470,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "extract zip (mixed)",
+  "tool": "unzip",
+  "seconds": 5.0342,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "extract zip (mixed)",
+  "tool": "bsdtar -x",
+  "seconds": 2.6908,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "extract zip (mixed)",
+  "tool": "archivix",
+  "seconds": 1.4208,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "list zip (mixed)",
+  "tool": "unzip -l",
+  "seconds": 0.0491,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zip-mixed",
+  "scenario": "list zip (mixed)",
+  "tool": "archivix ls",
+  "seconds": 0.0258,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "create tar.gz (src)",
+  "tool": "tar -czf (bsdtar)",
+  "seconds": 7.9725,
+  "size": 29501651,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "create tar.gz (src)",
+  "tool": "tar | gzip -6",
+  "seconds": 6.0238,
+  "size": 29501689,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "create tar.gz (src)",
+  "tool": "archivix",
+  "seconds": 1.2091,
+  "size": 27471250,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "extract tar.gz (src)",
+  "tool": "tar -xzf  [std .tgz]",
+  "seconds": 5.2398,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "extract tar.gz (src)",
+  "tool": "archivix [std .tgz]",
+  "seconds": 1.0215,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "extract tar.gz (src)",
+  "tool": "tar -xzf  [archivix .tgz]",
+  "seconds": 1.7416,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "extract tar.gz (src)",
+  "tool": "archivix [archivix .tgz]",
+  "seconds": 0.8956,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "list tar.gz (src)",
+  "tool": "tar -tzf",
+  "seconds": 0.1922,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "list tar.gz (src)",
+  "tool": "archivix ls [std .tgz]",
+  "seconds": 0.1357,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-src",
+  "scenario": "list tar.gz (src)",
+  "tool": "archivix ls [archivix .tgz]",
+  "seconds": 0.011,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "create tar.gz (mixed)",
+  "tool": "tar -czf (bsdtar)",
+  "seconds": 16.5682,
+  "size": 273478984,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "create tar.gz (mixed)",
+  "tool": "tar | gzip -6",
+  "seconds": 13.3376,
+  "size": 273478984,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "create tar.gz (mixed)",
+  "tool": "archivix",
+  "seconds": 1.7337,
+  "size": 269840980,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "extract tar.gz (mixed)",
+  "tool": "tar -xzf  [std .tgz]",
+  "seconds": 6.0676,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "extract tar.gz (mixed)",
+  "tool": "archivix [std .tgz]",
+  "seconds": 2.2962,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "extract tar.gz (mixed)",
+  "tool": "tar -xzf  [archivix .tgz]",
+  "seconds": 2.8192,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "extract tar.gz (mixed)",
+  "tool": "archivix [archivix .tgz]",
+  "seconds": 1.5699,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "list tar.gz (mixed)",
+  "tool": "tar -tzf",
+  "seconds": 0.5226,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "list tar.gz (mixed)",
+  "tool": "archivix ls [std .tgz]",
+  "seconds": 0.4496,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "tgz-mixed",
+  "scenario": "list tar.gz (mixed)",
+  "tool": "archivix ls [archivix .tgz]",
+  "seconds": 0.0117,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zst",
+  "scenario": "create tar.zst (src)",
+  "tool": "tar | zstd -T0 -3",
+  "seconds": 5.4255,
+  "size": 23782360,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zst",
+  "scenario": "create tar.zst (src)",
+  "tool": "archivix",
+  "seconds": 1.2208,
+  "size": 23203442,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (src)",
+  "tool": "zstd -dc | tar -x",
+  "seconds": 5.1929,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (src)",
+  "tool": "archivix [zstd-cli file]",
+  "seconds": 0.9208,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (src)",
+  "tool": "archivix [archivix file]",
+  "seconds": 0.8508,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "zst",
+  "scenario": "list tar.zst (src)",
+  "tool": "zstd -dc | tar -t",
+  "seconds": 0.1379,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zst",
+  "scenario": "list tar.zst (src)",
+  "tool": "archivix ls [archivix file]",
+  "seconds": 0.0115,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zst",
+  "scenario": "create tar.zst (mixed)",
+  "tool": "tar | zstd -T0 -3",
+  "seconds": 6.0345,
+  "size": 261139778,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zst",
+  "scenario": "create tar.zst (mixed)",
+  "tool": "archivix",
+  "seconds": 1.6121,
+  "size": 250316444,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (mixed)",
+  "tool": "zstd -dc | tar -x",
+  "seconds": 5.9826,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (mixed)",
+  "tool": "archivix [zstd-cli file]",
+  "seconds": 1.1174,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zst",
+  "scenario": "extract tar.zst (mixed)",
+  "tool": "archivix [archivix file]",
+  "seconds": 1.7054,
+  "size": null,
+  "input_bytes": 613510024
+ },
+ {
+  "group": "zst",
+  "scenario": "list tar.zst (mixed)",
+  "tool": "zstd -dc | tar -t",
+  "seconds": 0.3488,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "zst",
+  "scenario": "list tar.zst (mixed)",
+  "tool": "archivix ls [archivix file]",
+  "seconds": 0.0116,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (tar.gz, src)",
+  "tool": "tar -xOzf",
+  "seconds": 0.1946,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (tar.gz, src)",
+  "tool": "archivix cat [archivix .tgz]",
+  "seconds": 0.0123,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (tar.zst, src)",
+  "tool": "zstd -dc | tar -xO",
+  "seconds": 0.1313,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (tar.zst, src)",
+  "tool": "archivix cat [archivix file]",
+  "seconds": 0.0203,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (zip, src)",
+  "tool": "unzip -p",
+  "seconds": 0.0088,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "member",
+  "scenario": "read 1 member (zip, src)",
+  "tool": "archivix cat",
+  "seconds": 0.0112,
+  "size": null,
+  "input_bytes": null
+ },
+ {
+  "group": "xz",
+  "scenario": "create tar.xz (src)",
+  "tool": "tar | xz -T0 -6",
+  "seconds": 8.1875,
+  "size": 16134224,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "xz",
+  "scenario": "create tar.xz (src)",
+  "tool": "archivix",
+  "seconds": 7.5748,
+  "size": 15435144,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "xz",
+  "scenario": "extract tar.xz (src)",
+  "tool": "xz -dc | tar -x",
+  "seconds": 5.2302,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "xz",
+  "scenario": "extract tar.xz (src)",
+  "tool": "archivix",
+  "seconds": 0.9509,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "bz2",
+  "scenario": "create tar.bz2 (src)",
+  "tool": "tar -cjf (bsdtar)",
+  "seconds": 15.5433,
+  "size": 20026257,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "bz2",
+  "scenario": "create tar.bz2 (src)",
+  "tool": "archivix",
+  "seconds": 1.9117,
+  "size": 19265714,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "bz2",
+  "scenario": "extract tar.bz2 (src)",
+  "tool": "tar -xjf  [std]",
+  "seconds": 7.1601,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "bz2",
+  "scenario": "extract tar.bz2 (src)",
+  "tool": "archivix [archivix file]",
+  "seconds": 1.173,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "7z",
+  "scenario": "create 7z (src)",
+  "tool": "bsdtar --format 7zip",
+  "seconds": 32.8487,
+  "size": 15107292,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "7z",
+  "scenario": "create 7z (src)",
+  "tool": "archivix",
+  "seconds": 9.1072,
+  "size": 15159594,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "7z",
+  "scenario": "extract 7z (src)",
+  "tool": "bsdtar -x",
+  "seconds": 2.1665,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "7z",
+  "scenario": "extract 7z (src)",
+  "tool": "archivix",
+  "seconds": 0.9746,
+  "size": null,
+  "input_bytes": 216798048
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (gzip)",
+  "tool": "gzip -6",
+  "seconds": 7.6205,
+  "size": 123404642,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (gzip)",
+  "tool": "archivix",
+  "seconds": 0.6128,
+  "size": 121802920,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (gzip)",
+  "tool": "gzip -d",
+  "seconds": 0.3891,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (gzip)",
+  "tool": "archivix [archivix file]",
+  "seconds": 0.0841,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (zstd)",
+  "tool": "zstd -T0 -3",
+  "seconds": 0.2444,
+  "size": 111065152,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (zstd)",
+  "tool": "archivix",
+  "seconds": 0.2132,
+  "size": 111816193,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (zstd)",
+  "tool": "zstd -d",
+  "seconds": 0.3197,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (zstd)",
+  "tool": "archivix [archivix file]",
+  "seconds": 0.1083,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (lz4)",
+  "tool": "lz4",
+  "seconds": 0.4165,
+  "size": 172732984,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (lz4)",
+  "tool": "archivix",
+  "seconds": 0.4129,
+  "size": 173120062,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (lz4)",
+  "tool": "lz4 -d",
+  "seconds": 0.1956,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (lz4)",
+  "tool": "archivix [archivix file]",
+  "seconds": 0.0554,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (xz)",
+  "tool": "xz -T0 -6",
+  "seconds": 13.1526,
+  "size": 77123236,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (xz)",
+  "tool": "archivix",
+  "seconds": 13.8925,
+  "size": 77123236,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (xz)",
+  "tool": "xz -d",
+  "seconds": 0.5629,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (xz)",
+  "tool": "archivix [archivix file]",
+  "seconds": 0.5219,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (bzip2)",
+  "tool": "bzip2 -9",
+  "seconds": 19.4174,
+  "size": 115160478,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "compress 497MB file (bzip2)",
+  "tool": "archivix",
+  "seconds": 2.913,
+  "size": 115106419,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (bzip2)",
+  "tool": "bzip2 -d",
+  "seconds": 6.2448,
+  "size": null,
+  "input_bytes": 509849600
+ },
+ {
+  "group": "single",
+  "scenario": "decompress 497MB file (bzip2)",
+  "tool": "archivix [archivix file]",
+  "seconds": 1.0991,
+  "size": null,
+  "input_bytes": 509849600
+ }
+]

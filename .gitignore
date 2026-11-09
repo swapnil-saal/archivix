@@ -1,0 +1,4 @@
+target/
+*.zip
+*.tar*
+*.7z

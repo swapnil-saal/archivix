@@ -1,0 +1,64 @@
+[package]
+name = "archivix"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+description = "Parallel archive engine: create, extract, list, read and search zip, tar.{gz,zst,xz,bz2,lz4,br}, 7z and rar using every core, with an MCP server for AI agents"
+license = "MIT OR Apache-2.0"
+authors = ["Swapnil Shukla"]
+repository = "https://github.com/swapnil-saal/archivix"
+homepage = "https://github.com/swapnil-saal/archivix"
+documentation = "https://docs.rs/archivix"
+readme = "README.md"
+keywords = ["archive", "compression", "zip", "tar", "zstd"]
+categories = ["compression", "command-line-utilities", "filesystem"]
+exclude = ["bench/results-*.json", ".github/"]
+
+[dependencies]
+anyhow = "1.0.104"
+brotli = "9.1.1"
+bzip2 = "0.6.1"
+clap = { version = "4.6.7", features = ["derive", "wrap_help"] }
+crc32fast = "1.5.4"
+crossbeam-channel = "0.5.17"
+filetime = "0.2.29"
+flate2 = { version = "1.1.11", default-features = false, features = ["zlib-rs"] }
+globset = "0.4.21"
+libc = "0.2.191"
+libdeflate-sys = "1.26.1"
+libdeflater = "1.26.1"
+liblzma = { version = "0.4.9", features = ["parallel", "static"] }
+lz4_flex = "0.14.0"
+memchr = "2.8.3"
+memmap2 = "0.9.12"
+rayon = "1.12.0"
+regex = "1.13.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sevenz-rust2 = "0.25.0"
+tar = "0.4.46"
+tempfile = "3.27.0"
+unrar = { version = "0.5.8", optional = true }
+walkdir = "2.5.0"
+xxhash-rust = { version = "0.8.19", features = ["xxh3"] }
+zip = { version = "9.5.0", default-features = false, features = ["deflate", "deflate64", "bzip2", "zstd", "lzma", "xz", "aes-crypto", "time"] }
+zstd = { version = "0.14.3", features = ["zstdmt"] }
+
+[features]
+default = ["rar"]
+rar = ["dep:unrar"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[lib]
+name = "archivix"
+path = "src/lib.rs"
+
+[[bin]]
+name = "archivix"
+path = "src/main.rs"

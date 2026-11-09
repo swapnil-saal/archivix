@@ -1,0 +1,42 @@
+name: Bug report
+description: Something doesn't work, or an archive is handled incorrectly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security issues** (path traversal, crashes on crafted archives): please use
+        [private reporting](https://github.com/swapnil-saal/archivix/security/advisories/new) instead.
+  - type: input
+    id: version
+    attributes:
+      label: archivix version
+      description: Output of `archivix --version`
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and architecture
+      placeholder: e.g. macOS 15 arm64, Ubuntu 24.04 x86_64, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and output
+      description: The exact command you ran and what it printed
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: archive
+    attributes:
+      label: The archive
+      description: Which tool and command created it (e.g. `7zz a -mx9`, `tar -czf`, Windows Explorer)? Attach it if you can share it.
