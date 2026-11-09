@@ -59,7 +59,7 @@ jobs:
           Compress-Archive $name "$name.zip"
           (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.target }}
           path: |
@@ -83,7 +83,7 @@ jobs:
           cd dist
           for f in *.dmg; do mv "$f" "${f%.dmg}-universal.dmg"; done
           for f in *.dmg; do shasum -a 256 "$f" > "$f.sha256"; done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: macos-app
           path: dist/*.dmg*
