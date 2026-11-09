@@ -87,7 +87,7 @@ pub fn extract(path: &Path, opts: &ExtractOptions) -> Result<ExtractStats> {
         }
     }
     // Largest first: big entries start early and don't straggle at the end.
-    idx.sort_unstable_by(|a, b| b.1.cmp(&a.1));
+    idx.sort_unstable_by_key(|a| std::cmp::Reverse(a.1));
     let pw = opts.password.as_deref();
     idx.par_iter().try_for_each_init(
         || ar.clone(),
