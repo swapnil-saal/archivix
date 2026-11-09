@@ -33,7 +33,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - run: cargo build --release --locked --workspace --target ${{ matrix.target }}
 
       - name: Package (unix)
         if: runner.os != 'Windows'
@@ -41,7 +41,11 @@ jobs:
         run: |
           name=archivix-${GITHUB_REF_NAME}-${{ matrix.target }}
           mkdir "$name"
-          cp target/${{ matrix.target }}/release/archivix README.md LICENSE-MIT LICENSE-APACHE THIRD_PARTY.md "$name/"
+          cp target/${{ matrix.target }}/release/archivix target/${{ matrix.target }}/release/archivix-gui README.md LICENSE-MIT LICENSE-APACHE THIRD_PARTY.md "$name/"
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            cp gui/linux/archivix.desktop "$name/"
+            "$name/archivix-gui" --write-png "$name/archivix.png" 256
+          fi
           tar -czf "$name.tar.gz" "$name"
           shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256"
 
@@ -51,7 +55,7 @@ jobs:
         run: |
           $name = "archivix-$env:GITHUB_REF_NAME-${{ matrix.target }}"
           New-Item -ItemType Directory $name | Out-Null
-          Copy-Item target/${{ matrix.target }}/release/archivix.exe, README.md, LICENSE-MIT, LICENSE-APACHE, THIRD_PARTY.md $name
+          Copy-Item target/${{ matrix.target }}/release/archivix.exe, target/${{ matrix.target }}/release/archivix-gui.exe, README.md, LICENSE-MIT, LICENSE-APACHE, THIRD_PARTY.md $name
           Compress-Archive $name "$name.zip"
           (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
 
@@ -62,8 +66,30 @@ jobs:
             archivix-*.tar.gz*
             archivix-*.zip*
 
+  macos-app:
+    name: macOS app (universal .dmg)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-universal
+      - run: UNIVERSAL=1 gui/macos/bundle.sh
+      - name: Checksum
+        run: |
+          cd dist
+          for f in *.dmg; do mv "$f" "${f%.dmg}-universal.dmg"; done
+          for f in *.dmg; do shasum -a 256 "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: dist/*.dmg*
+
   release:
-    needs: build
+    needs: [build, macos-app]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -73,6 +99,8 @@ jobs:
         with:
           generate_release_notes: true
           files: |
+            archivix-*.dmg
+            archivix-*.dmg.sha256
             archivix-*.tar.gz
             archivix-*.tar.gz.sha256
             archivix-*.zip

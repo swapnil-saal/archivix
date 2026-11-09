@@ -2,3 +2,5 @@ target/
 *.zip
 *.tar*
 *.7z
+dist/
+.DS_Store

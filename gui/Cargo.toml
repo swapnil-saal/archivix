@@ -1,0 +1,26 @@
+[package]
+name = "archivix-gui"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+description = "Desktop app for archivix: open, browse, preview, extract and create archives"
+license = "MIT OR Apache-2.0"
+authors = ["Swapnil Shukla"]
+repository = "https://github.com/swapnil-saal/archivix"
+publish = false
+
+[[bin]]
+name = "archivix-gui"
+path = "src/main.rs"
+
+[features]
+default = ["rar"]
+rar = ["archivix/rar"]
+
+[dependencies]
+anyhow = "1.0.104"
+archivix = { path = "..", default-features = false }
+eframe = "0.35.0"
+egui_extras = "0.35.0"
+png = "0.18.1"
+rfd = "0.18.0"

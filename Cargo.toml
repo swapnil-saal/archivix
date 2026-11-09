@@ -12,7 +12,7 @@ documentation = "https://docs.rs/archivix"
 readme = "README.md"
 keywords = ["archive", "compression", "zip", "tar", "zstd"]
 categories = ["compression", "command-line-utilities", "filesystem"]
-exclude = ["bench/results-*.json", ".github/"]
+exclude = ["bench/results-*.json", ".github/", "gui/", "docs/"]
 
 [dependencies]
 anyhow = "1.0.104"
@@ -47,6 +47,9 @@ zstd = { version = "0.14.3", features = ["zstdmt"] }
 [features]
 default = ["rar"]
 rar = ["dep:unrar"]
+
+[workspace]
+members = [".", "gui"]
 
 [profile.release]
 opt-level = 3

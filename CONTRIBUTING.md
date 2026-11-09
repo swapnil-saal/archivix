@@ -53,6 +53,8 @@ build.
 | `src/extract.rs` | Path sanitising and parallel, safe writes to disk |
 | `src/format.rs`, `src/codec.rs` | Format detection and codec plumbing |
 | `src/mcp.rs` | MCP server for AI agents |
+| `src/progress.rs` | Progress counters and cancellation shared by the CLI and GUI |
+| `gui/` | Desktop app (egui); `gui/macos/bundle.sh` builds the `.app`/`.dmg` |
 | `src/main.rs` | CLI |
 | `tests/` | Integration tests (round trips, traversal, index compatibility) |
 | `bench/` | Benchmark harness, round-trip script, report generator |

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=archivix
+GenericName=Archive Manager
+Comment=Open, browse, extract and create archives
+Exec=archivix-gui %F
+Icon=archivix
+Terminal=false
+Categories=Utility;Archiving;Compression;
+MimeType=application/zip;application/x-tar;application/gzip;application/x-compressed-tar;application/zstd;application/x-zstd-compressed-tar;application/x-xz;application/x-xz-compressed-tar;application/x-bzip2;application/x-bzip-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/x-lz4;
+Keywords=zip;tar;7z;rar;archive;compress;extract;

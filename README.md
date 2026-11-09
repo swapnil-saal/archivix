@@ -26,7 +26,33 @@ archivix d  big.log.zst                    # single-file decompress
 archivix mcp                               # MCP server for AI agents
 ```
 
-Every read command accepts `--json`.
+Every read command accepts `--json`. In a terminal, long operations show a live
+progress bar (percentage, throughput, file count, ETA) on stderr; it stays out of
+pipes, `--json` and `-q`.
+
+## Desktop app
+
+![archivix desktop app browsing an archive with a live preview](docs/screenshot-browse.png)
+
+A small native app for macOS, Windows and Linux, built on the same engine:
+
+* **Drop an archive** to browse it instantly: sort, filter, multi-select (⌘/Ctrl, Shift)
+* **Preview** text or hex of any file without extracting it
+* **Extract** everything or just the selection; **Test** integrity
+* **Drop files and folders** to create zip, tar.zst, tar.gz, tar.xz, 7z, tar.bz2 or tar.lz4
+* Live progress with throughput and file count, and a working **Cancel**
+* Follows the system light/dark setting; renders CJK and other scripts using system fonts
+
+Download it from the [releases](https://github.com/swapnil-saal/archivix/releases):
+`archivix-*-macos-universal.dmg` (Apple Silicon + Intel), or `archivix-gui` inside the
+Windows and Linux archives (Linux includes a `.desktop` file and icon).
+
+> **macOS:** the app is ad-hoc signed but not notarized. On first launch, right-click
+> the app → **Open**, or run `xattr -dr com.apple.quarantine /Applications/archivix.app`.
+> **Windows:** SmartScreen may warn about an unknown publisher; choose *More info → Run anyway*.
+
+Run from source with `cargo run --release -p archivix-gui`; build the `.app`/`.dmg` with
+`gui/macos/bundle.sh` (`UNIVERSAL=1` for a universal binary).
 
 ## Install
 

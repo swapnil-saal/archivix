@@ -26,6 +26,13 @@ First public release.
   xz and 7z blocks; whole-buffer libdeflate inflate for standard gzip.
 - Parallel, path-traversal-safe extraction (O_NOFOLLOW, deferred links).
 - MCP server (`archivix mcp`) and `--json` output for AI agents.
+- Desktop app (`archivix-gui`, egui) for macOS, Windows and Linux: browse,
+  preview, extract, test and create archives with drag and drop; universal
+  macOS `.dmg`.
+- Live progress bar in the CLI and a progress/cancel API in the library
+  (`archivix::progress()`).
+- `ExtractOptions::literal` for exact member names (names containing `[`,
+  `*` or `?` are not treated as globs).
 - Content-based format detection; ZipCrypto/AES zip and AES 7z decryption.
 
 [Unreleased]: https://github.com/swapnil-saal/archivix/compare/v0.1.0...HEAD

@@ -33,7 +33,7 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --all-targets --release --locked -- -D warnings
+      - run: cargo clippy --workspace --all-targets --release --locked -- -D warnings
 
   test:
     name: test (${{ matrix.os }})
@@ -47,6 +47,22 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --release --locked
+
+  gui:
+    name: desktop app (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked -p archivix-gui
+      - name: Bundle .app and .dmg
+        if: runner.os == 'macOS'
+        run: gui/macos/bundle.sh
 
   no-rar:
     name: build without the unrar feature
@@ -79,6 +95,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.93
+      # Pin via the input, not the ref: Dependabot treats "@1.93" as an action version.
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.93"
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release --locked
+      - run: cargo build --release --locked --workspace
